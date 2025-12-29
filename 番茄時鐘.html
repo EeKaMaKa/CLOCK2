@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>藍色番茄鐘</title>
+    <style>
+        /* 1. 網頁背景設為淺藍色 */
+        body {
+            background-color: #e3f2fd;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            transition: background-color 0.3s ease;
+            overflow: hidden;
+        }
+
+        /* 8. 番茄鐘大小為 500px*500px */
+        /* 2. 番茄鐘表面為藍色且形狀為圓形 */
+        #pomodoro {
+            width: 500px;
+            height: 500px;
+            background-color: #2196f3;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            color: white;
+            text-align: center;
+            position: relative;
+        }
+
+        /* 4. 顯示剩餘時間 */
+        #timer-display {
+            font-size: 80px;
+            margin-bottom: 20px;
+            user-select: none;
+        }
+
+        /* 5. 計時截止前3分鐘閃爍且加粗 */
+        .warning {
+            font-weight: bold;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0.3; }
+            100% { opacity: 1; }
+        }
+
+        /* 6. 截止時背景交互顯示動畫 */
+        .alarm-bg {
+            animation: flash-bg 0.5s infinite;
+        }
+
+        @keyframes flash-bg {
+            0% { background-color: #fffde7; } /* 淺黃色 */
+            100% { background-color: #3e2723; } /* 深咖啡 */
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .input-group {
+            color: white;
+        }
+
+        input {
+            width: 50px;
+            padding: 5px;
+            border-radius: 5px;
+            border: none;
+            text-align: center;
+            font-size: 18px;
+        }
+
+        .button-group button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 20px;
+            margin: 0 5px;
+            transition: transform 0.1s;
+        }
+
+        .button-group button:active {
+            transform: scale(0.95);
+        }
+
+        #start-btn { background-color: #4caf50; color: white; }
+        #set-btn { background-color: #ff9800; color: white; }
+        #clear-btn { background-color: #f44336; color: white; }
+
+    </style>
+</head>
+<body id="bg">
+
+    <div id="pomodoro">
+        <div id="timer-display">25:00</div>
+
+        <div class="controls">
+            <div class="input-group">
+                <input type="number" id="min-input" placeholder="分" min="0" max="99" value="25"> :
+                <input type="number" id="sec-input" placeholder="秒" min="0" max="59" value="00">
+            </div>
+
+            <div class="button-group">
+                <button id="set-btn">設定</button>
+                <button id="start-btn">開始</button>
+                <button id="clear-btn">清除</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let timeLeft = 1500; // 預設 25 分鐘
+        let timerInterval = null;
+        let isRunning = false;
+
+        const display = document.getElementById('timer-display');
+        const bg = document.getElementById('bg');
+        const minInput = document.getElementById('min-input');
+        const secInput = document.getElementById('sec-input');
+
+        function updateDisplay() {
+            const mins = Math.floor(timeLeft / 60);
+            const secs = timeLeft % 60;
+            const formattedTime = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            display.textContent = formattedTime;
+
+            // 5. 截止前3分鐘（180秒）閃爍且加粗
+            if (timeLeft <= 180 && timeLeft > 0 && isRunning) {
+                display.classList.add('warning');
+            } else {
+                display.classList.remove('warning');
+            }
+        }
+
+        function startTimer() {
+            if (isRunning) return;
+            if (timeLeft <= 0) return;
+
+            isRunning = true;
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                updateDisplay();
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    isRunning = false;
+                    // 6. 截止時觸發背景閃爍
+                    bg.classList.add('alarm-bg');
+                }
+            }, 1000);
+        }
+
+        // 7. 設定按鈕
+        document.getElementById('set-btn').addEventListener('click', () => {
+            clearInterval(timerInterval);
+            isRunning = false;
+            bg.classList.remove('alarm-bg');
+            
+            let m = parseInt(minInput.value) || 0;
+            let s = parseInt(secInput.value) || 0;
+
+            // 限制最大值 99:59
+            if (m > 99) m = 99;
+            if (s > 59) s = 59;
+            
+            timeLeft = m * 60 + s;
+            updateDisplay();
+        });
+
+        // 開始按鈕
+        document.getElementById('start-btn').addEventListener('click', startTimer);
+
+        // 7. 清除按鈕
+        document.getElementById('clear-btn').addEventListener('click', () => {
+            clearInterval(timerInterval);
+            isRunning = false;
+            timeLeft = 0;
+            updateDisplay();
+            bg.classList.remove('alarm-bg');
+        });
+
+        // 初始化
+        updateDisplay();
+    </script>
+</body>
+</html>
